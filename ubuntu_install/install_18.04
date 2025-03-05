@@ -1,0 +1,514 @@
+
+Instructions to setup packages on Ubuntu 18.04
+There are three code modifications, follow the **** marks
+
+#basic
+##########
+
+sudo apt update
+sudo apt upgrade
+sudo apt install htop git synaptic gedit gimp inkscape okular doxygen cmake cmake-curses-gui \
+libboost-all-dev libopenblas-dev libtbb-dev libomp-dev gcc-6 g++-6 gcc-4.8 g++-4.8 \
+libgdal-dev gdal-bin python-gdal libvips-dev tcl8.5-dev tk8.5-dev csh imagemagick libopenthreads-dev libglew-dev libv4l-dev
+sudo apt install texlive-full
+
+#grub for recovery
+sudo gedit /etc/default/grub
+comment out lines with hidden parameters
+set GRUB_TIMEOUT=10
+sudo update-grub
+
+**********
+https://modelpredict.com/wht-requirements-txt-is-not-enough
+**********
+
+#python2
+##########
+
+sudo apt install python-pip
+python2 -m pip install --upgrade pip
+python2 -m pip install numpy
+
+#python3
+##########
+
+sudo apt install python3-pip
+python3 -m pip install --upgrade pip
+sudo apt install python3-distutils
+python3 -m pip install numpy
+
+
+#cuda-toolkit (9.1) NOTE: this installs the toolkit only, it doesn't install CUDA or GPU support
+#it is recommended to install CUDA-10.0 full instead
+##########
+
+sudo ubuntu-drivers autoinstall
+sudo apt install nvidia-cuda-toolkit
+prime-select query (make sure nvidia is an option there)
+sudo prime-select nvidia (select nvidia as the default profile)
+reboot
+nvidia-smi
+
+
+### MOVE TO INSTALL cuda-10.1.243 instead
+#cuda-10.1.105 (WARNING, FINISH all this section BEFORE Ubuntu restart)
+#########
+https://developer.nvidia.com/cuda-10.1-download-archive-base?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=deblocal
+sudo dpkg -i cuda-repo-ubuntu1804-10-1-local-10.1.105-418.39_1.0-1_amd64.deb
+sudo apt-key add /var/cuda-repo-10-1-local-10.1.105-418.39/7fa2af80.pub
+sudo apt-get update
+sudo apt-get install cuda
+# WARNING: Ubuntu freezes at startup after cuda install
+sudo add-apt-repository ppa:graphics-drivers/ppa
+sudo ubuntu-drivers devices
+sudo ubuntu-drivers autoinstall
+sudo apt update --fix-missing
+sudo apt install xserver-xorg-input-all
+sudo apt update
+sudo apt upgrade
+#Set the following environmental variables in ~/.bashrc
+#export PATH=/usr/local/cuda-10.0/bin${PATH:+:${PATH}}
+#export LD_LIBRARY_PATH=/usr/local/cuda-10.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
+
+
+#cuda-10.1.243  (Update #2, works better with SparseConvNet)
+#########
+
+# Add NVIDIA package repositories
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.1.243-1_amd64.deb
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+sudo dpkg -i cuda-repo-ubuntu1804_10.1.243-1_amd64.deb
+sudo apt-get update
+wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
+sudo apt install ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
+sudo apt-get update
+
+# Install NVIDIA driver
+sudo apt-get install --no-install-recommends nvidia-driver-450
+# Reboot. Check that GPUs are visible using the command: nvidia-smi
+
+# Install development and runtime libraries (~4GB)
+sudo apt-get install --no-install-recommends \
+    cuda-10-1 \
+    libcudnn7=7.6.5.32-1+cuda10.1  \
+    libcudnn7-dev=7.6.5.32-1+cuda10.1
+
+# Install TensorRT. Requires that libcudnn7 is installed above.
+sudo apt-get install -y --no-install-recommends libnvinfer6=6.0.1-1+cuda10.1 \
+    libnvinfer-dev=6.0.1-1+cuda10.1 \
+    libnvinfer-plugin6=6.0.1-1+cuda10.1
+
+
+#From:
+#https://developer.nvidia.com/cuda-10.1-download-archive-update2?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=deblocal
+#Installation Instructions:ls
+
+#wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
+#sudo mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
+#wget http://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda-repo-ubuntu1804-10-1-local-10.1.243-418.87.00_1.0-1_amd64.deb
+#sudo dpkg -i cuda-repo-ubuntu1804-10-1-local-10.1.243-418.87.00_1.0-1_amd64.deb
+#sudo apt-key add /var/cuda-repo-10-1-local-10.1.243-418.87.00/7fa2af80.pub
+#sudo apt-get update
+#sudo apt-get -y install cuda
+
+#Cudnn for cuda-10.1
+#########
+
+#cd ~/Downloads
+#sudo dpkg -i libcudnn7_7.6.5.32-1+cuda10.1_amd64.deb
+#sudo dpkg -i libcudnn7-dev_7.6.5.32-1+cuda10.1_amd64.deb
+#sudo dpkg -i libcudnn7-doc_7.6.5.32-1+cuda10.1_amd64.deb
+
+
+#Tensorflow and Keras
+# check: https://stackoverflow.com/questions/50622525/which-tensorflow-and-cuda-version-combinations-are-compatible
+# for CUDA/GCC compatibility
+#########
+
+python3 -m pip install --upgrade pip
+python3 -m pip install tensorflow==2.1      # CPU
+python3 -m pip install tensorflow-gpu==2.1  # GPU
+python3 -m pip install Keras
+
+#OpenCV 2.4.13.3 (depends cuda-toolkit-9.1)
+##########
+
+export CXX=/usr/bin/g++-4.8 && export CC=/usr/bin/gcc-4.8
+cd /home/mrt/Downloads/opencv-2.4.13.3/build/
+rm -r *
+cmake ../ -DCMAKE_INSTALL_PREFIX=/home/mrt/Downloads/opencv-2.4.13.3/build/install \
+-DWITH_CUDA=ON \
+-DWITH_TBB=ON \
+-DBUILD_CUDA_STUBS=ON \
+-DBUILD_TBB=ON \
+-D_GLIBCXX_USE_CXX11_ABI=OFF -DCMAKE_CXX_STANDARD=11
+make -j4 && make install
+
+****After installing opencv
+gedit install/share/OpenCV/OpenCVConfig.cmake
+as follows
+replace : find_cuda_helper_libs(nppi)
+with : 
+	find_cuda_helper_libs(nppial)
+  	find_cuda_helper_libs(nppicc)
+  	find_cuda_helper_libs(nppicom)
+  	find_cuda_helper_libs(nppidei)
+  	find_cuda_helper_libs(nppif)
+  	find_cuda_helper_libs(nppig)
+  	find_cuda_helper_libs(nppim)
+  	find_cuda_helper_libs(nppist)
+  	find_cuda_helper_libs(nppisu)
+  	find_cuda_helper_libs(nppitc)
+replace : list(APPEND OpenCV_CUDA_LIBS_ABSPATH ${CUDA_nppc_LIBRARY} ${CUDA_nppi_LIBRARY} ${CUDA_npps_LIBRARY})
+with : list(APPEND OpenCV_CUDA_LIBS_ABSPATH "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppicom_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}")
+
+#OpenSceneGraph-3.2.3
+##########
+
+For 18.04 libopenscenegraph-dev is OpenSceneGraph-3.7.0. This is very different than what structured uses.
+Clone OpenSceneGraph-3.2.3 and compile from source against gcc/g++ 4.8.
+git clone --branch OpenSceneGraph-3.2.3 https://github.com/openscenegraph/OpenSceneGraph.git
+export CXX=/usr/bin/g++-4.8 && export CC=/usr/bin/gcc-4.8
+
+$ sudo apt install gdal-bin python-gdal libvips-dev csh libgsl-dev imagemagick
+
+$ ./configure -DCMAKE_CXX_STANDARD=11 \
+-DFFMPEG_LIBAVCODEC_INCLUDE_DIRS=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVCODEC_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libavcodec.a \
+-DFFMPEG_LIBAVDEVICE_INCLUDE_DIR=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVDEVICE_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libavdevice.a \
+-DFFMPEG_LIBAVFORMAT_INCLUDE_DIR=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVFORMAT_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libavformat.a \
+-DFFMPEG_LIBAVRESAMPLE_INCLUDE_D=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVUTIL_INCLUDE_DIRS=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVUTIL_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libavutil.a \
+-DFFMPEG_LIBSWRESAMPLE_INCLUDE_D=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBSWSCALE_INCLUDE_DIRS=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBSWSCALE_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libswscale.a
+
+OR
+
+$ cd OpenSceneGraph && mkdir build && cd build
+$ cmake .. -DCMAKE_CXX_STANDARD=11 \
+-DFFMPEG_LIBAVCODEC_INCLUDE_DIRS=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVCODEC_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libavcodec.a \
+-DFFMPEG_LIBAVDEVICE_INCLUDE_DIR=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVDEVICE_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libavdevice.a \
+-DFFMPEG_LIBAVFORMAT_INCLUDE_DIR=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVFORMAT_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libavformat.a \
+-DFFMPEG_LIBAVRESAMPLE_INCLUDE_D=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVUTIL_INCLUDE_DIRS=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBAVUTIL_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libavutil.a \
+-DFFMPEG_LIBSWRESAMPLE_INCLUDE_D=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBSWSCALE_INCLUDE_DIRS=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/include/ffmpeg_ \
+-DFFMPEG_LIBSWSCALE_LIBRARIES=/home/mrt/Downloads/opencv-2.4.13.3/3rdparty/lib/libswscale.a
+$ make -j4 && sudo make install
+
+****In file included from /home/mrt/Downloads/OpenSceneGraph/src/osgPlugins/gif/ReaderWriterGIF.cpp:53:0:
+/usr/include/gif_lib.h:248:51: error: declaration of ‘void* reallocarray(void*, size_t, size_t)’ has a different exception specifier
+ reallocarray(void *optr, size_t nmemb, size_t size);
+                                                   ^
+In file included from /usr/include/c++/4.8/cstdlib:72:0,
+                 from /usr/include/c++/4.8/ext/string_conversions.h:41,
+                 from /usr/include/c++/4.8/bits/basic_string.h:2815,
+                 from /usr/include/c++/4.8/string:52,
+                 from /usr/include/c++/4.8/bits/locale_classes.h:40,
+                 from /usr/include/c++/4.8/bits/ios_base.h:41,
+                 from /usr/include/c++/4.8/ios:42,
+                 from /usr/include/c++/4.8/ostream:38,
+                 from /home/mrt/Downloads/OpenSceneGraph/include/osg/Notify:20,
+                 from /home/mrt/Downloads/OpenSceneGraph/include/osg/Object:20,
+                 from /home/mrt/Downloads/OpenSceneGraph/include/osg/BufferObject:19,
+                 from /home/mrt/Downloads/OpenSceneGraph/include/osg/Image:17,
+                 from /home/mrt/Downloads/OpenSceneGraph/src/osgPlugins/gif/ReaderWriterGIF.cpp:1:
+/usr/include/stdlib.h:558:14: error: from previous declaration ‘void* reallocarray(void*, size_t, size_t) throw ()’
+ extern void *reallocarray (void *__ptr, size_t __nmemb, size_t __size)
+
+To solve, comment out lines 247-248 in /usr/include/gif_lib.h
+
+
+#structured (depends cuda-toolkit-9.1, OpenCV-2.4.13.3, OpenSceneGraph-3.2.3)
+##########
+
+$ sudo apt install libgdal-dev gdal-bin python-gdal libvips-dev tcl8.5-dev tk8.5-dev csh imagemagick libopenthreads-dev libglew-dev 
+$ export CXX=/usr/bin/g++-4.8 && export CC=/usr/bin/gcc-4.8
+$ export LD_LIBRARY_PATH=/usr/local/lib64  (this points to where OSG libraries were installed)
+
+****add guards
+$gedit /home/mrt/Dev/structured/vrip/src/vrip/strings.h
+#ifndef VRIP_STRINGS_H
+#define VRIP_STRINGS_H
+.
+.
+.
+#endif
+
+**** Use the following command to configure OSG libraries.
+**** If cmake can not find them yet, then use ccmake .. to assign them
+
+$ cmake .. -DCUDA_USE_STATIC_CUDA_RUNTIME=OFF \
+-DOpenCV_DIR=/home/mrt/Downloads/opencv-2.4.13.3/build/install/share/OpenCV/ \
+-DOSGDB_INCLUDE_DIR=/usr/local/include \
+-DOSGDB_LIBRARY=/usr/local/lib64/libosgDB.so \
+-DOSGFX_LIBRARY=/usr/local/lib64/libosgFX.so \
+-DOSGGA_INCLUDE_DIR=/usr/local/include \
+-DOSGGA_LIBRARY=/usr/local/lib64/libosgGA.so \
+-DOSGMANIPULATOR_INCLUDE_DIR=/usr/local/include \
+-DOSGMANIPULATOR_LIBRARY=/usr/local/lib64/libosgManipulator.so \
+-DOSGSIM_LIBRARY=/usr/local/lib64/libosgSim.so \
+-DOSGTERRAIN_LIBRARY=/usr/local/lib64/libosgTerrain.so \
+-DOSGTEXT_INCLUDE_DIR=/usr/local/include \
+-DOSGTEXT_LIBRARY=/usr/local/lib64/libosgText.so \
+-DOSGUTIL_INCLUDE_DIR=/usr/local/include \
+-DOSGUTIL_LIBRARY=/usr/local/lib64/libosgUtil.so \
+-DOSGVIEWER_INCLUDE_DIR=/usr/local/include \
+-DOSGVIEWER_LIBRARY=/usr/local/lib64/libosgViewer.so \
+-DOSG_GEN_INCLUDE_DIR=/usr/local/include \
+-DOSG_INCLUDE_DIR=/usr/local/include/ \
+-DOSG_LIBRARY=/usr/local/lib64/libosg.so
+$ make
+
+
+****some other non-common structured compile errors:
+
+(1)
+/home/mrt/Dev/structured/TexPyrAtlas.cpp: In function ‘std::vector<std::set<long int> > calc_atlases(const Vec3Array*, const osg::PrimitiveSet&, const Vec4Array*, std::vector<char>&, int)’:
+/home/mrt/Dev/structured/TexPyrAtlas.cpp:424:26: error: reference to ‘is_same’ is ambiguous
+         list_sets.unique(is_same());
+Replace all occurances of is_same with is_same_c
+is_same conflicts with std::is_same
+
+(2)
+/home/mrt/Dev/structured/ts-sonar/Didson.cpp:144:1: error: reference to ‘shared_ptr’ is ambiguous
+ shared_ptr<DidsonCartesian> Didson::getCartesian(int width, int widthTmp) const {
+Replace shared_ptr with boost::shared_ptr
+
+(3)
+/home/mrt/Dev/structured/Clipper.cpp:602:24: error: cannot convert ‘bool’ to ‘KdTreeBbox*’ in return
+                 return false;
+Replace (false) with (NULL), for all occurances of returning KdTreeBbox* as bool false
+
+(4)
+/home/mrt/Dev/structured/vcgapps/OGF/basic/io/line_stream.h:57:38: error: no match for ‘operator!=’ (operand types are ‘std::istream {aka std::basic_istream<char>}’ and ‘long int’)
+         bool ok() const { return in_ != NULL; }
+change to 
+bool ok() const { if(in_) return true; else return false; }
+
+(5)
+                 from /home/mrt/Dev/structured/vcgapps/numeric_stuff/ACE/amg_eigen_computation.cpp:14:
+/usr/include/c++/7/bits/stl_algobase.h:243:56: error: macro "min" passed 3 arguments, but takes just 2
+     min(const _Tp& __a, const _Tp& __b, _Compare __comp)
+in defs.h, comment out both min and max definitions and add #include <algorithm>
+in read_parameters.cpp, change max to std::max
+
+(6)
+/home/mrt/Dev/structured/swrender/FragmentShaders.h:83:24: error: ‘constexpr’ needed for in-class initialization of static data member ‘const float FragmentShaderBlendingDistPass::rmax’ of non-integral type [-fpermissive]
+     static const float rmax=0.70710678;
+const should be replaced with constexpr for static constant floats or doubles
+
+(7)
+assert error
+comment out definition //#define static_assert assert in /structured/vcgapps/vcglib/cvg/math/base.h
+
+
+#ceres-solver (depends gflags, glog)
+##########
+
+Install using 18.04 repository:
+$ sudo apt install libgflags-dev libgoogle-glog-dev libunwind8
+$ sudo apt install libceres-dev
+
+If installing from source, then:
+$ export CXX=/usr/bin/g++-6 && export CC=/usr/bin/gcc-6
+$ git clone https://github.com/gflags/gflags.git (compile from source if using different standard/compiler)
+$ git clone https://github.com/google/glog.git (compile from source if using different standard/compiler)
+$ git clone https://github.com/ceres-solver/ceres-solver.git
+
+
+#okvis (depends seres-solver)
+##########
+
+If ceres-solver was compiled using GCC-6:
+export CXX=/usr/bin/g++-6 && export CC=/usr/bin/gcc-6
+
+Then:
+$ sudo apt install libsuitesparse-dev
+cd ~/Dev
+git clone https://github.com/ethz-asl/okvis.git
+cd okvis && mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j4
+
+
+#OpenCV 3.4 (depends cuda-toolkit-9.1, Opencv-3 doesn't support compilers later than 6)
+##########
+
+git clone -b 3.4 https://github.com/opencv/opencv.git
+git clone -b 3.4 https://github.com/opencv/opencv_contrib.git
+export CXX=/usr/bin/g++-6 && export CC=/usr/bin/gcc-6
+mkdir opencv_build &&cd opencv_build
+cmake ../opencv \
+-DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules/ \
+-DENABLE_PRECOMPILED_HEADERS=OFF \
+-DWITH_CUDA=ON \
+-DBUILD_CUDA_STUBS=ON \
+-DBUILD_TBB=ON \
+-DWITH_OPENMP=ON \
+-DENABLE_CXX11=ON \
+-DCUDA_NVCC_FLAGS=--expt-relaxed-constexpr
+make -j4 && sudo make install
+
+
+#gtsam (branch 4.0.0-alpha2, gcc/g++ 7.5 is OK)
+##########
+
+#wget -O ~/Downloads/gtsam.zip https://github.com/borglab/gtsam/archive/4.0.0-alpha2.zip
+#cd ~/Downloads/ && unzip gtsam.zip -d ~/Downloads/
+#cd ~/Downloads/gtsam-4.0.0-alpha2/
+
+cd ~/Downloads/
+git clone --branch 4.0.0-alpha2 https://github.com/borglab/gtsam.git
+cd gtsam
+# check you are on branch 4.0.0-alpha2 using $ git describe --tags
+mkdir build && cd build
+cmake ..
+make -j4 && sudo make install
+
+
+#sensor drivers
+##########
+
+sudo apt install libraw1394-11 libavcodec-ffmpeg56 libavformat-ffmpeg56 libswscale-ffmpeg3 libswresample-ffmpeg1 libavutil-ffmpeg54 libgtkmm-2.4-dev libglademm-2.4-dev libgtkglextmm-x11-1.2-dev libusb-1.0-0
+cd drivers/spinnaker-1.27.0.48-amd64
+./install_spinnaker.sh
+cd drivers/flycapture2-2.13.3.31-amd64
+./install_flycapture.sh
+
+
+NOTE: librealsense old instructions don't work anymore:
+sudo apt-key adv --keyserver keys.gnupg.net --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo bionic main" -u
+sudo apt install librealsense2-dkms
+sudo apt install librealsense2-utils
+sudo apt install librealsense2-dev
+
+
+Note: new librealsense instructions here: https://github.com/IntelRealSense/librealsense/blob/master/doc/installation.md
+sudo apt-get update && sudo apt-get upgrade
+cd ~/Downloads
+git clone https://github.com/IntelRealSense/librealsense.git
+cd librealsense
+
+./scripts/setup_udev_rules.sh
+./scripts/patch-realsense-ubuntu-lts.sh
+
+or better
+
+mkdir build && cd build
+cmake ..
+make -j4
+sudo make install
+
+
+https://github.com/Livox-SDK/Livox-SDK.git
+cd Livox-SDK/build/
+cmake ..
+make -j4 && sudo make install
+
+sudo apt install libdmtx-dev
+
+sudo apt update
+sudo apt upgrade
+
+
+#ROS melodic
+##########
+
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+sudo apt update
+sudo apt install ros-melodic-ros-base
+sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential
+sudo rosdep init
+rosdep update
+sudo apt install ros-melodic-rviz ros-melodic-pcl* ros-melodic-image-common ros-melodic-rosbridge-server \
+ros-melodic-ddynamic-reconfigure ros-melodic-diagnostic-updater ros-melodic-roslint ros-melodic-rosserial \
+ros-melodic-rosserial-arduino ros-melodic-eigen-conversions ros-melodic-tf2-msgs ros-melodic-tf2-geometry-msgs \
+ros-melodic-rqt ros-melodic-rqt-reconfigure ros-melodic-rqt-publisher ros-melodic-rqt-gui-cpp ros-melodic-rqt-console \
+ros-melodic-rqt-gui-py ros-melodic-rqt-py-console ros-melodic-rqt-action ros-melodic-rqt-bag ros-melodic-rqt-bag-plugins \
+ros-melodic-rqt-graph ros-melodic-rqt-dep ros-melodic-rqt-launch ros-melodic-rqt-logger-level ros-melodic-rqt-shell \
+ros-melodic-rqt-service-caller ros-melodic-rqt-srv ros-melodic-rqt-top ros-melodic-rqt-topic ros-melodic-rqt-web
+sudo apt update
+sudo apt upgrade
+pip install roslibpy
+
+
+#catkin_ws (depends ROS, ceres-solver, opencv-3.3.1, gtsam, gcc-7.5, g++-7.5)
+##########
+
+cd ~/Dev/ros_vision/src
+git clone -b melodic https://github.com/ros-perception/vision_opencv.git
+git clone -b melodic https://github.com/ros-perception/image_pipeline.git
+git clone -b indigo-devel https://github.com/ros-perception/image_transport_plugins.git
+git clone https://github.com/ros-visualization/rqt_image_view.git
+
+cd ~/Dev/catkin_ws/src
+git clone https://github.com/intel-ros/realsense.git
+git clone https://github.com/ros-drivers/pointgrey_camera_driver.git
+git clone https://github.com/ros-drivers/flir_camera_driver
+git clone c3-mvp
+git clone --branch kinetic https://github.com/emiliofidalgo/obindex.git
+git clone --branch kinetic https://github.com/emiliofidalgo/bimos.git
+git clone --recurse-submodules -j8 https://github.com/ethz-asl/kalibr.git
+cd ..
+source /opt/ros/melodic/setup.bash
+catkin_make
+
+BIMOS: PDF policy (before you run)
+sudo gedit /etc/ImageMagick-6/policy.xml
+<policy domain="coder" rights="read | write" pattern="PDF" />
+
+KALIBR: replace every occurance cvSize with cv::Size
+
+
+cd ~/Dev/catkin_ws/src
+git clone https://github.com/Livox-SDK/livox_ros_driver.git
+git clone https://github.com/Livox-SDK/livox_horizon_loam.git
+git clone https://github.com/RobustFieldAutonomyLab/LeGO-LOAM.git
+cd ..
+catkin_make -j1
+
+BIMOS Error:
+/usr/bin/x86_64-linux-gnu-ld: CMakeFiles/bimos_node.dir/src/graph/MosaicGraph.cpp.o: undefined reference to symbol 'omp_get_wtime@@OMP_2.0'
+//usr/lib/x86_64-linux-gnu/libgomp.so.1: error adding symbols: DSO missing from command line
+collect2: error: ld returned 1 exit status
+bimos/CMakeFiles/bimos_node.dir/build.make:708: recipe for target '/home/mrt/Dev/catkin_ws/devel/lib/bimos/bimos_node' failed
+
+KALIBR Error:
+replace every occurance of cvSize with cv::Size
+gedit /home/mrt/Dev/catkin_ws/src/kalibr/aslam_cv/aslam_imgproc/include/aslam/implementation/aslamcv_helper.hpp
+
+Fix:
+Add to CMakeLists.txt
+if(OPENMP_FOUND)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+
+
+#calibration dependencies
+##########
+
+sudo apt install python-numpy python-scipy python-matplotlib python-igraph
+
+
+#ORB_SLAM2
+##########
+
+sudo apt install libgsl-dev libglew-dev
+git clone https://github.com/stevenlovegrove/Pangolin
+git clone https://github.com/raulmur/ORB_SLAM2
+
+
