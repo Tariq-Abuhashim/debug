@@ -78,7 +78,7 @@ git clone -b v0.12.0 https://github.com/pytorch/vision  # use v0.13.0 with cuda 
 # follow DETR steps, this is only a reinstall
 # for Jetson, run the line without mkl and mkl-include
 # If you're installing it system-wide and not using a virtual environment, you might need to use sudo:
-sudo python3 -m pip install astunparse numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing_extensions future six requests dataclasses
+python3 -m pip install astunparse numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing_extensions future six requests dataclasses
 #python3 -m pip install astunparse numpy ninja pyyaml setuptools cmake cffi typing_extensions future six requests dataclasses
 pip install testresources
 
