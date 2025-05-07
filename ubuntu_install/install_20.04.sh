@@ -80,7 +80,7 @@ git clone -b v0.12.0 https://github.com/pytorch/vision  # use v0.13.0 with cuda 
 # If you're installing it system-wide and not using a virtual environment, you might need to use sudo:
 python3 -m pip install astunparse numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing_extensions future six requests dataclasses
 #python3 -m pip install astunparse numpy ninja pyyaml setuptools cmake cffi typing_extensions future six requests dataclasses
-pip install testresources
+pip3 install testresources
 
 #sudo apt install libcudnn8-dev
 
