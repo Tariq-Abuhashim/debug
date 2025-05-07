@@ -86,6 +86,10 @@ pip3 install testresources
 
 cd ~/src/pytorch
 sudo CMAKE_CUDA_ARCHITECTURES="75" CUDA_HOME=/usr/local/cuda-11.4 CUDACXX=/usr/local/cuda-11.4/bin/nvcc python3 setup.py install
+# if you encounter issues with finding python packages
+# mkdir -p build && cd build
+# cmake .. -DPYTHON_EXECUTABLE=$(which python3.8)
+# make -j$(nproc)
 
 cd ~/src/vision
 # if numpy version is causing an issue, then force the use of pip to install dependencies correctly.
