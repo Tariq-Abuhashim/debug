@@ -80,7 +80,7 @@ sudo python3 -m pip install astunparse numpy ninja pyyaml mkl mkl-include setupt
 #python3 -m pip install astunparse numpy ninja pyyaml setuptools cmake cffi typing_extensions future six requests dataclasses
 pip install testresources
 
-sudo apt install libcudnn8-dev
+#sudo apt install libcudnn8-dev
 
 cd ~/src/pytorch
 sudo CMAKE_CUDA_ARCHITECTURES="75" CUDA_HOME=/usr/local/cuda-11.4 CUDACXX=/usr/local/cuda-11.4/bin/nvcc python3 setup.py install
