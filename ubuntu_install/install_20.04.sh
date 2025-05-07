@@ -102,9 +102,6 @@ echo 'export PATH=/usr/src/tensorrt/bin:$PATH' >> ~/.bashrc
 echo 'export LD_LIBRARY_PATH=/usr/src/tensorrt/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
 source ~/.bashrc
 
-sudo add-apt-repository ppa:graphics-drivers/ppa
-sudo apt-get update
-
 # pycuda
 #pip install --upgrade toml
 #sudo pip install pycuda==2022.2.2  # for numpy 1.24.4
