@@ -37,6 +37,7 @@ sudo apt-get install cuda-11.4
 
 echo 'export PATH=/usr/local/cuda-11.4/bin:$PATH' >> ~/.bashrc
 echo 'export LD_LIBRARY_PATH=/usr/local/cuda-11.4/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
+echo 'export CPLUS_INCLUDE_PATH=/usr/local/cuda-11.4/include:$CPLUS_INCLUDE_PATH' >> ~/.bashrc
 source ~/.bashrc
 sudo ldconfig
 
