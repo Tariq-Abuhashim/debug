@@ -131,6 +131,12 @@ cd /opt/nvidia/deepstream/deepstream-6.3
 sudo ./install.sh
 sudo ldconfig
 
+#Boost Jetson Performance
+#To optimize performance, especially for video analytics tasks, boost the Jetson clocks:
+sudo nvpmodel -m 0
+sudo jetson_clocks
+#Note: For Jetson Orin NX, use sudo nvpmodel -m 8 instead
+
 # opencv
 sudo apt install libopencv-dev python3-opencv
 sudo pip3 install opencv-python
