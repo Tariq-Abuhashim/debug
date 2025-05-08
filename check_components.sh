@@ -1,8 +1,15 @@
 #!/bin/bash
 
-# Define the Unicode Characters
-CHECK_MARK=✔️
-CROSS_MARK=❌
+# Fallback for symbols if not in UTF-8 locale
+if [[ $(locale charmap) != "UTF-8" ]]; then
+    CHECK_MARK="[OK]"
+    CROSS_MARK="[ERR]"
+else
+    CHECK_MARK="✔️"
+    CROSS_MARK="❌"
+fi
+
+MISSING_TOOLS=()
 
 # Function to check the availability and print the version of a command
 check_and_print_version() {
@@ -12,48 +19,88 @@ check_and_print_version() {
         eval "$3"
     else
         echo -e "${CROSS_MARK} Error: $2 is NOT available."
+        MISSING_TOOLS+=("$2")
     fi
 }
 
-# Check and print the version of cmake
-check_and_print_version "cmake" "cmake" "cmake --version"
+# cmake
+check_and_print_version "cmake" "cmake" "cmake --version | head -n 1"
 
-# Check and print the version of conda (from Anaconda3)
-check_and_print_version "conda" "Anaconda3" "conda --version"
+# conda
+check_and_print_version "conda" "Anaconda3 (conda)" "conda --version"
 
-# Check and print the version of nvcc (from CUDA)
-check_and_print_version "nvcc" "nvcc (Cuda compiler)" "nvcc --version"
+# nvcc (CUDA Compiler)
+check_and_print_version "nvcc" "nvcc (CUDA compiler)" "nvcc --version | grep release"
 
-# Check for CUDA library and print the version using nvcc
+# CUDA Runtime Library
 if ldconfig -p | grep -q "libcudart"; then
-    echo -e "${CHECK_MARK} CUDA Library is available."
-    nvcc --version
+    echo -e "${CHECK_MARK} CUDA runtime library is available."
 else
-    echo -e "${CROSS_MARK} Error: CUDA Library is NOT available."
+    echo -e "${CROSS_MARK} Error: CUDA runtime library is NOT available."
+    MISSING_TOOLS+=("CUDA Library")
 fi
 
-# Check for TensorRT library
+# cuDNN
+if ldconfig -p | grep -q "libcudnn"; then
+    echo -e "${CHECK_MARK} cuDNN is available."
+    CUDNN_HEADER=$(find /usr/include /usr/local/include /usr/local/ -name "cudnn_version.h" 2>/dev/null | head -n 1)
+    if [ -f "$CUDNN_HEADER" ]; then
+        MAJOR=$(grep "#define CUDNN_MAJOR" "$CUDNN_HEADER" | awk '{print $3}')
+        MINOR=$(grep "#define CUDNN_MINOR" "$CUDNN_HEADER" | awk '{print $3}')
+        PATCH=$(grep "#define CUDNN_PATCHLEVEL" "$CUDNN_HEADER" | awk '{print $3}')
+        echo "cuDNN version: ${MAJOR}.${MINOR}.${PATCH}"
+    else
+        echo "cuDNN version file not found. Installed, but version unknown."
+    fi
+else
+    echo -e "${CROSS_MARK} Error: cuDNN is NOT available."
+    MISSING_TOOLS+=("cuDNN")
+fi
+
+# TensorRT (shared lib and Python API)
 if ldconfig -p | grep -q "libnvinfer"; then
-    echo -e "${CHECK_MARK} TensorRT is available."
-    echo "For TensorRT version, please refer to the documentation or the system where it was installed."
+    echo -e "${CHECK_MARK} TensorRT library is available."
+    if python3 -c "import tensorrt" &> /dev/null; then
+        python3 -c "import tensorrt as trt; print('TensorRT version:', trt.__version__)"
+    else
+        echo "TensorRT Python API not found. Version detection skipped."
+    fi
 else
     echo -e "${CROSS_MARK} Error: TensorRT is NOT available."
+    MISSING_TOOLS+=("TensorRT")
 fi
 
-# Check for ROS and print the version
+# ROS
 if [ -n "$ROS_DISTRO" ]; then
     echo -e "${CHECK_MARK} ROS ($ROS_DISTRO) is available."
-    echo "For detailed ROS version, please refer to the environment variable ROS_DISTRO or the system where it was installed."
 else
     echo -e "${CROSS_MARK} Error: ROS is NOT available."
+    MISSING_TOOLS+=("ROS")
 fi
 
-# Check for catkin and print the version
-check_and_print_version "catkin_make" "catkin" "catkin_make --version"
-#check_and_print_version "catkin_make" "catkin" "echo \"catkin_make is available.\""
+# catkin_make
+command -v catkin_make &> /dev/null
+if [ $? -eq 0 ]; then
+    echo -e "${CHECK_MARK} catkin_make is available."
+    catkin_make --help | head -n 1
+else
+    echo -e "${CROSS_MARK} Error: catkin_make is NOT available."
+    MISSING_TOOLS+=("catkin")
+fi
 
-# Check and print the version of comma (from Anaconda3)
-check_and_print_version "csv-play" "comma" "conda --version"
+# comma (csv-play)
+check_and_print_version "csv-play" "comma (csv-play)" "csv-play --help | head -n 1"
 
-# Check and print the version of snark (from Anaconda3)
-check_and_print_version "cv-cat" "snark" "conda --version"
+# snark (cv-cat)
+check_and_print_version "cv-cat" "snark (cv-cat)" "cv-cat --help | head -n 1"
+
+# Final summary
+echo
+echo "========== Summary =========="
+if [ ${#MISSING_TOOLS[@]} -eq 0 ]; then
+    echo -e "${CHECK_MARK} All tools are available."
+else
+    echo -e "${CROSS_MARK} Missing tools: ${MISSING_TOOLS[*]}"
+fi
+echo "============================="
+
