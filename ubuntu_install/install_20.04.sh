@@ -122,6 +122,13 @@ make -j4
 sudo python3 setup.py install
 sudo pip install .
 
+# DeepStream 6.3
+# Download the deepstream_sdk_v6.3.0_jetson.tbz2 file directly
+wget --content-disposition 'https://api.ngc.nvidia.com/v2/resources/org/nvidia/deepstream/6.3/files?redirect=true&path=deepstream_sdk_v6.3.0_jetson.tbz2' -o 'deepstream_sdk_v6.3.0_jetson.tbz2'
+#wget --content-disposition 'https://api.ngc.nvidia.com/v2/resources/org/nvidia/deepstream/6.3/files?redirect=true&path=deepstream_sdk_v6.3.0_x86_64.tbz2' -o 'deepstream_sdk_v6.3.0_x86_64.tbz2'
+sudo tar -xvf deepstream_sdk_v6.3.0_jetson.tbz2 -C /
+sudo ./install.sh
+
 # opencv
 sudo apt install libopencv-dev python3-opencv
 sudo pip3 install opencv-python
