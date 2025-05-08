@@ -13,6 +13,11 @@ git clone -b 3.30.2 https://github.com/Kitware/CMake.git
 
 sudo apt install build-essential libssl-dev dkms
 sudo apt install gcc
+sudo apt install python3-pip
+
+# Check Python version
+python3 --version
+pip3 --version
 
 # Nvidia drivers
 # https://ubuntu.com/server/docs/nvidia-drivers-installation
@@ -47,18 +52,51 @@ nvidia-smi
 nvcc --version
 
 # Install cuDNN (wget may fail to get all the file due to nvidia account log in, download it manually)
+# from https://developer.nvidia.com/rdp/cudnn-archive
+# 	Download cuDNN v8.2.4 (September 2nd, 2021), for CUDA 11.4
+#		cuDNN Runtime Library for Ubuntu20.04 x86_64 (Deb)
+sudo dpkg -i libcudnn8_8.2.4.15-1+cuda11.4_amd64.deb
+sudo apt update
+sudo apt install libcudnn8
+#		cuDNN Developer Library for Ubuntu20.04 x86_64 (Deb)
+sudo dpkg -i libcudnn8-dev_8.2.4.15-1+cuda11.4_amd64.deb
+sudo apt update
+sudo apt install libcudnn8-dev
+
 #https://developer.nvidia.com/downloads/compute/cudnn/secure/8.9.7/local_installers/11.x/cudnn-linux-x86_64-8.9.7.29_cuda11-archive.tar.xz/
-tar -xJvf cudnn-linux-x86_64-8.9.7.29_cuda11-archive.tar.xz
-sudo cp cudnn-linux-x86_64-8.9.7.29_cuda11-archive/include/cudnn*.h /usr/local/cuda-11.4/include
-sudo cp cudnn-linux-x86_64-8.9.7.29_cuda11-archive/lib/libcudnn* /usr/local/cuda-11.4/lib64
-sudo chmod a+r /usr/local/cuda-11.4/include/cudnn*.h /usr/local/cuda-11.4/lib64/libcudnn*
+#tar -xJvf cudnn-linux-x86_64-8.9.7.29_cuda11-archive.tar.xz
+#sudo cp cudnn-linux-x86_64-8.9.7.29_cuda11-archive/include/cudnn*.h /usr/local/cuda-11.4/include
+#sudo cp cudnn-linux-x86_64-8.9.7.29_cuda11-archive/lib/libcudnn* /usr/local/cuda-11.4/lib64
+#sudo chmod a+r /usr/local/cuda-11.4/include/cudnn*.h /usr/local/cuda-11.4/lib64/libcudnn*
 
-# Install pip3
-sudo apt install python3-pip
+# verify cudnn
+ls /usr/local/cuda-11.4/include | grep cudnn
+ls /usr/local/cuda-11.4/lib64 | grep cudnn
 
-# Check Python version
-python3 --version
-pip3 --version
+# tensorrt-8 (deepstream 6.2, cuda 11.4, tensorrt 8)
+cd ~/Downloads
+wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/secure/8.6.1/local_repos/nv-tensorrt-local-repo-ubuntu2204-8.6.1-cuda-11.8_1.0-1_amd64.deb
+sudo dpkg -i nv-tensorrt-local-repo-ubuntu2204-8.6.1-cuda-11.8_1.0-1_amd64.deb
+sudo cp /var/nv-tensorrt-local-repo-ubuntu2204-8.6.1-cuda-11.8/nv-tensorrt-local-0628887B-keyring.gpg /usr/share/keyrings/
+sudo apt update
+sudo apt install tensorrt
+pip3 install nvidia-pyindex
+pip3 install nvidia-tensorrt
+echo 'export PATH=/usr/src/tensorrt/bin:$PATH' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=/usr/src/tensorrt/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
+source ~/.bashrc
+
+# tensorrt-10 (deepsteam 6.3, cuda 12.0, tensorrt 10)
+cd ~/Downloads
+wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/10.0.1/local_repo/nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8_1.0-1_amd64.deb
+sudo dpkg -i nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8_1.0-1_amd64.deb
+sudo cp /var/nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8/nv-tensorrt-local-4BE0C9B6-keyring.gpg /usr/share/keyrings/
+sudo apt update
+sudo apt install tensorrt
+sudo apt install python3-libnvinfer-dev
+echo 'export PATH=/usr/src/tensorrt/bin:$PATH' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=/usr/src/tensorrt/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
+source ~/.bashrc
 
 # Install basic dependencies
 sudo apt-get update
@@ -96,18 +134,6 @@ cd ~/src/vision
 #sudo python3 setup.py clean 
 sudo CMAKE_CUDA_ARCHITECTURES="75" CUDA_HOME=/usr/local/cuda-11.4 CUDACXX=/usr/local/cuda-11.4/bin/nvcc python3 setup.py install
 
-# tensorrt
-cd ~/Downloads
-wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/10.0.1/local_repo/nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8_1.0-1_amd64.deb
-sudo dpkg -i nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8_1.0-1_amd64.deb
-sudo cp /var/nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8/nv-tensorrt-local-4BE0C9B6-keyring.gpg /usr/share/keyrings/
-sudo apt update
-sudo apt install tensorrt
-sudo apt install python3-libnvinfer-dev
-echo 'export PATH=/usr/src/tensorrt/bin:$PATH' >> ~/.bashrc
-echo 'export LD_LIBRARY_PATH=/usr/src/tensorrt/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
-source ~/.bashrc
-
 # pycuda
 #pip install --upgrade toml
 #sudo pip install pycuda==2022.2.2  # for numpy 1.24.4
@@ -122,12 +148,21 @@ make -j4
 sudo python3 setup.py install
 sudo pip install .
 
-# DeepStream 6.3
+# DeepStream (6.3 on Jetson, 6.2 on 20.04)
+#https://developer.nvidia.com/deepstream-sdk-download-tesla-archived   (archives)
+#https://developer.nvidia.com/embedded/deepstream-on-jetson-downloads-archived   (archives)
+sudo apt update
+sudo apt install libgstrtspserver-1.0-0
+sudo apt install libyaml-cpp0.6
+sudo apt install libnvidia-gl-470
+sudo apt install libjsoncpp1
+
 # Download the deepstream_sdk_v6.3.0_jetson.tbz2 file directly
 wget --content-disposition 'https://api.ngc.nvidia.com/v2/resources/org/nvidia/deepstream/6.3/files?redirect=true&path=deepstream_sdk_v6.3.0_jetson.tbz2' -o 'deepstream_sdk_v6.3.0_jetson.tbz2'
-#wget --content-disposition 'https://api.ngc.nvidia.com/v2/resources/org/nvidia/deepstream/6.3/files?redirect=true&path=deepstream_sdk_v6.3.0_x86_64.tbz2' -o 'deepstream_sdk_v6.3.0_x86_64.tbz2'
+#wget --content-disposition 'https://developer.nvidia.com/downloads/deepstream-sdk-v620-x86-64-tbz2' -o 'deepstream_sdk_v6.2.0_x86_64.tbz2'
 sudo tar -xvf deepstream_sdk_v6.3.0_jetson.tbz2 -C /
-cd /opt/nvidia/deepstream/deepstream-6.3
+#sudo tar -xvf deepstream_sdk_v6.2.0_x86_64.tbz2 -C /
+cd /opt/nvidia/deepstream/deepstream-6.3   # 6.3 Jetson, 6.2 20.04
 sudo ./install.sh
 sudo ldconfig
 
@@ -138,7 +173,7 @@ sudo jetson_clocks
 #Note: For Jetson Orin NX, use sudo nvpmodel -m 8 instead
 
 # opencv
-sudo apt install libopencv-dev python3-opencv
+sudo apt install libopencv-dev #python3-opencv
 sudo pip3 install opencv-python
 sudo pip3 install opencv-python-headless  # Optional, for headless environments
 

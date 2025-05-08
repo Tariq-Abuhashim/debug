@@ -26,9 +26,6 @@ check_and_print_version() {
 # cmake
 check_and_print_version "cmake" "cmake" "cmake --version | head -n 1"
 
-# conda
-check_and_print_version "conda" "Anaconda3 (conda)" "conda --version"
-
 # nvcc (CUDA Compiler)
 check_and_print_version "nvcc" "nvcc (CUDA compiler)" "nvcc --version | grep release"
 
@@ -70,6 +67,22 @@ else
     MISSING_TOOLS+=("TensorRT")
 fi
 
+# Check for DeepStream SDK
+if command -v deepstream-app &> /dev/null; then
+    echo -e "${CHECK_MARK} DeepStream SDK is available."
+
+    # Capture the version output
+    VERSION_OUTPUT=$(deepstream-app --version 2>&1 | grep -i "DeepStreamSDK")
+    if [[ -n "$VERSION_OUTPUT" ]]; then
+        echo "$VERSION_OUTPUT"
+    else
+        echo "DeepStream version detected, but exact version string not found."
+    fi
+else
+    echo -e "${CROSS_MARK} Error: DeepStream SDK is NOT available."
+    MISSING_TOOLS+=("DeepStream SDK")
+fi
+
 # ROS
 if [ -n "$ROS_DISTRO" ]; then
     echo -e "${CHECK_MARK} ROS ($ROS_DISTRO) is available."
@@ -93,6 +106,9 @@ check_and_print_version "csv-play" "comma (csv-play)" "csv-play --help | head -n
 
 # snark (cv-cat)
 check_and_print_version "cv-cat" "snark (cv-cat)" "cv-cat --help | head -n 1"
+
+# conda
+check_and_print_version "conda" "Anaconda3 (conda)" "conda --version"
 
 # Final summary
 echo
