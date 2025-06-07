@@ -3,6 +3,8 @@
 # Stop execution if any command fails
 set -e
 
+sudo apt install git
+
 # update cmake
 cd ~/Downloads
 sudo apt remove --purge cmake
