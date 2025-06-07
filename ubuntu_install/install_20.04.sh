@@ -3,6 +3,9 @@
 # Stop execution if any command fails
 set -e
 
+sudo apt install build-essential libssl-dev dkms
+sudo apt install gcc
+sudo apt install python3-pip
 sudo apt install git
 
 # update cmake
@@ -12,10 +15,6 @@ git clone -b v3.30.2 https://github.com/Kitware/CMake.git
 ./bootstrap && make && sudo make install
 #mrt@gannet:~$ cmake --version
 #cmake version 3.30.20240918-gb69b5a9
-
-sudo apt install build-essential libssl-dev dkms
-sudo apt install gcc
-sudo apt install python3-pip
 
 # Check Python version
 python3 --version
