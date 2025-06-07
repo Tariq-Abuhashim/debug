@@ -8,7 +8,7 @@ sudo apt install git
 # update cmake
 cd ~/Downloads
 sudo apt remove --purge cmake
-git clone -b 3.30.2 https://github.com/Kitware/CMake.git
+git clone -b v3.30.2 https://github.com/Kitware/CMake.git
 ./bootstrap && make && sudo make install
 #mrt@gannet:~$ cmake --version
 #cmake version 3.30.20240918-gb69b5a9
