@@ -14,6 +14,9 @@ sudo apt remove --purge cmake
 git clone -b v3.30.2 https://github.com/Kitware/CMake.git
 cd CMake
 ./bootstrap && make && sudo make install
+echo 'export PATH=/usr/local/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+sudo ldconfig
 #mrt@gannet:~$ cmake --version
 #cmake version 3.30.20240918-gb69b5a9
 
@@ -53,6 +56,11 @@ sudo ldconfig
 nvidia-smi
 nvcc --version
 
+# Check your CUDA Capability Major/Minor version number: (its 7.5 for the GPU in Zbook create G7)
+cd /usr/local/cuda-11.4/samples/1_Utilities/deviceQuery
+sudo make
+./deviceQuery
+
 # Install cuDNN (wget may fail to get all the file due to nvidia account log in, download it manually)
 # from https://developer.nvidia.com/rdp/cudnn-archive
 # 	Download cuDNN v8.2.4 (September 2nd, 2021), for CUDA 11.4
@@ -70,12 +78,13 @@ sudo apt install libcudnn8-dev
 #sudo cp cudnn-linux-x86_64-8.9.7.29_cuda11-archive/include/cudnn*.h /usr/local/cuda-11.4/include
 #sudo cp cudnn-linux-x86_64-8.9.7.29_cuda11-archive/lib/libcudnn* /usr/local/cuda-11.4/lib64
 #sudo chmod a+r /usr/local/cuda-11.4/include/cudnn*.h /usr/local/cuda-11.4/lib64/libcudnn*
-
 # verify cudnn
-ls /usr/local/cuda-11.4/include | grep cudnn
-ls /usr/local/cuda-11.4/lib64 | grep cudnn
+#ls /usr/local/cuda-11.4/include | grep cudnn
+#ls /usr/local/cuda-11.4/lib64 | grep cudnn
 
-# tensorrt-8 (deepstream 6.2, cuda 11.4, tensorrt 8)
+# Configuration (cuda 11.4, cuDNN 8.2, tensorrt 8.6, deepstream 6.0)
+
+# tensorrt-8
 cd ~/Downloads
 wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/secure/8.6.1/local_repos/nv-tensorrt-local-repo-ubuntu2204-8.6.1-cuda-11.8_1.0-1_amd64.deb
 sudo dpkg -i nv-tensorrt-local-repo-ubuntu2204-8.6.1-cuda-11.8_1.0-1_amd64.deb
@@ -88,17 +97,49 @@ echo 'export PATH=/usr/src/tensorrt/bin:$PATH' >> ~/.bashrc
 echo 'export LD_LIBRARY_PATH=/usr/src/tensorrt/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
 source ~/.bashrc
 
-# tensorrt-10 (deepsteam 6.3, cuda 12.0, tensorrt 10)
-cd ~/Downloads
-wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/10.0.1/local_repo/nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8_1.0-1_amd64.deb
-sudo dpkg -i nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8_1.0-1_amd64.deb
-sudo cp /var/nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8/nv-tensorrt-local-4BE0C9B6-keyring.gpg /usr/share/keyrings/
+# deepstream-6.0
 sudo apt update
-sudo apt install tensorrt
-sudo apt install python3-libnvinfer-dev
-echo 'export PATH=/usr/src/tensorrt/bin:$PATH' >> ~/.bashrc
-echo 'export LD_LIBRARY_PATH=/usr/src/tensorrt/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
-source ~/.bashrc
+sudo apt install \
+libssl1.1 \
+libgstreamer1.0-0 \
+gstreamer1.0-tools \
+gstreamer1.0-plugins-good \
+gstreamer1.0-plugins-bad \
+gstreamer1.0-plugins-ugly \
+gstreamer1.0-libav \
+libgstrtspserver-1.0-0 \
+libjansson4
+cd ~/Downloads
+git clone https://github.com/edenhill/librdkafka.git
+cd librdkafka
+git reset --hard 7101c2310341ab3f4675fc565f64f0967e135a6a
+#if python is not linked to python3, then link them
+#sudo ln -s /usr/bin/python3 /usr/bin/python
+./configure
+#in Makefile replace python with python3
+make
+sudo make install
+sudo mkdir -p /opt/nvidia/deepstream/deepstream-6.0/lib
+sudo cp /usr/local/lib/librdkafka* /opt/nvidia/deepstream/deepstream-6.0/lib
+#download the deepstream SDK
+wget https://developer.nvidia.com/deepstream-6.0_6.0.0-1_amd64deb
+sudo apt install ./deepstream-6.0_6.0.0-1_amd64.deb
+
+#check deepstream is installed
+dpkg -l | grep deepstream
+deepstream-app --version-all
+
+# tensorrt-10
+#cd ~/Downloads
+#wget https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/10.0.1/local_repo/nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8_1.0-1_amd64.deb
+#sudo dpkg -i nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8_1.0-1_amd64.deb
+#sudo cp /var/nv-tensorrt-local-repo-ubuntu2004-10.0.1-cuda-11.8/nv-tensorrt-local-4BE0C9B6-keyring.gpg /usr/share/keyrings/
+#sudo apt update
+#sudo apt install tensorrt
+#sudo apt install python3-libnvinfer-dev
+#echo 'export PATH=/usr/src/tensorrt/bin:$PATH' >> ~/.bashrc
+#echo 'export LD_LIBRARY_PATH=/usr/src/tensorrt/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
+#source ~/.bashrc
 
 # Install basic dependencies
 sudo apt-get update
@@ -111,73 +152,92 @@ mkdir ~/src
 mkdir ~/dev
 
 cd ~/src
-git clone -b v1.11.0 https://github.com/pytorch/pytorch  # use v1.12.0 with cuda 11.4
-git clone -b v0.12.0 https://github.com/pytorch/vision  # use v0.13.0 with cuda 11.4
+git clone --recursive -b v1.12.0 https://github.com/pytorch/pytorch  # use v1.12.0 with cuda 11.4
+git clone -b v0.13.0 https://github.com/pytorch/vision  # use v0.13.0 with cuda 11.4
+
+# Check Python paths to confirm that sudo will not be needed
+python3 -m site
+#sys.path should contain packages and later should include pytorch
+#USER_BASE should be ~/.local
+#USER_SITE should be ~/.local/lib/python3.8/site-packages
 
 # Install PyTorch compatible with your CUDA (Jetson doesnt support mkl)
 # follow DETR steps, this is only a reinstall
 # for Jetson, run the line without mkl and mkl-include
 # If you're installing it system-wide and not using a virtual environment, you might need to use sudo:
-sudo python3 -m pip install astunparse numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing_extensions future six requests
+python3 -m pip install astunparse numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing_extensions future six requests
 #sudo python3 -m pip install astunparse numpy ninja pyyaml setuptools cmake cffi typing_extensions future six requests
-sudo pip3 install testresources
-
-#sudo apt install libcudnn8-dev
+python3 -m pip install testresources
 
 cd ~/src/pytorch
-sudo CMAKE_CUDA_ARCHITECTURES="75" CUDA_HOME=/usr/local/cuda-11.4 CUDACXX=/usr/local/cuda-11.4/bin/nvcc python3 setup.py install
-# if you encounter issues with finding python packages
-# mkdir -p build && cd build
-# cmake .. -DPYTHON_EXECUTABLE=$(which python3.8)
-# make -j$(nproc)
+# other inputs sometimes needed:
+# 	CUDA_HOME=/usr/local/cuda-11.4 
+# 	CUDACXX=/usr/local/cuda-11.4/bin/nvcc
+export BUILD_VERSION=1.12.0
+export TORCH_CUDA_ARCH_LIST="7.5"
+python3 setup.py bdist_wheel
+cd dist
+python3 -m pip install torch-1.12.0*.whl
+
+#check
+cd ~/src
+python3 -c "import torch; print(f'PyTorch version: {torch.__version__}'); \
+print(f'Compute: {torch.cuda.get_arch_list()}'); \
+print(f'CUDA available: {torch.cuda.is_available()}'); \
+print(f'CUDA version: {torch.version.cuda}'); \
+print(f'Device name: {torch.cuda.get_device_name()}')"
 
 cd ~/src/vision
+# other inputs sometimes needed:
+# 	CUDA_HOME=/usr/local/cuda-11.4 
+# 	CUDACXX=/usr/local/cuda-11.4/bin/nvcc
 # if numpy version is causing an issue, then force the use of pip to install dependencies correctly.
-#sudo python3 setup.py clean 
-sudo CMAKE_CUDA_ARCHITECTURES="75" CUDA_HOME=/usr/local/cuda-11.4 CUDACXX=/usr/local/cuda-11.4/bin/nvcc python3 setup.py install
+#	sudo python3 setup.py clean 
+export BUILD_VERSION=0.13.0
+export TORCH_CUDA_ARCH_LIST="7.5"
+python3 setup.py bdist_wheel
+cd dist
+pip install torchvision-0.13.0*.whl
+
+#check
+cd ~/src
+python3 -c "import torch; print(f'PyTorch version: {torch.__version__}'); \
+import torchvision; print(f'torchvision version: {torchvision.__version__}'); \
+print(f'Compute: {torch.cuda.get_arch_list()}'); \
+print(f'CUDA available: {torch.cuda.is_available()}'); \
+print(f'CUDA version: {torch.version.cuda}'); \
+print(f'Device name: {torch.cuda.get_device_name()}')"
 
 # pycuda
+python3 -m pip install pycuda
+python3 -c "import pycuda; print(pycuda.VERSION)"
 #pip install --upgrade toml
 #sudo pip install pycuda==2022.2.2  # for numpy 1.24.4
 # if not finding cuda.h, then explicitly link cuda when installing pycuda
 #sudo pip install pycuda==2022.2.2 --global-option="-I$CUDA_HOME/include" --global-option="-L$CUDA_HOME/lib64"
-cd ~/Downloads
-wget https://files.pythonhosted.org/packages/61/69/f53a6624def08348778a7407683f44c2a9adfdb0b68b9a45f8213ff66c9d/pycuda-2024.1.2.tar.gz
-tar xzvf pycuda-2024.1.2.tar.gz
-cd pycuda-2024.1.2
-./configure.py --cuda-root=/usr/local/cuda-11.4
-make -j4
-sudo python3 setup.py install
-sudo pip install .
+#cd ~/Downloads
+#wget https://files.pythonhosted.org/packages/61/69/f53a6624def08348778a7407683f44c2a9adfdb0b68b9a45f8213ff66c9d/pycuda-2024.1.2.tar.gz
+#tar xzvf pycuda-2024.1.2.tar.gz
+#cd pycuda-2024.1.2
+#./configure.py --cuda-root=/usr/local/cuda-11.4
+#make -j4
+#sudo python3 setup.py install
+#sudo pip install .
 
-# DeepStream (6.3 on Jetson, 6.2 on 20.04)
-#https://developer.nvidia.com/deepstream-sdk-download-tesla-archived   (archives)
-#https://developer.nvidia.com/embedded/deepstream-on-jetson-downloads-archived   (archives)
-sudo apt update
-sudo apt install libgstrtspserver-1.0-0
-sudo apt install libyaml-cpp0.6
-sudo apt install libnvidia-gl-470
-sudo apt install libjsoncpp1
-
-# Download the deepstream_sdk_v6.3.0_jetson.tbz2 file directly
-wget --content-disposition 'https://api.ngc.nvidia.com/v2/resources/org/nvidia/deepstream/6.3/files?redirect=true&path=deepstream_sdk_v6.3.0_jetson.tbz2' -o 'deepstream_sdk_v6.3.0_jetson.tbz2'
-#wget --content-disposition 'https://developer.nvidia.com/downloads/deepstream-sdk-v620-x86-64-tbz2' -o 'deepstream_sdk_v6.2.0_x86_64.tbz2'
-sudo tar -xvf deepstream_sdk_v6.3.0_jetson.tbz2 -C /
-#sudo tar -xvf deepstream_sdk_v6.2.0_x86_64.tbz2 -C /
-cd /opt/nvidia/deepstream/deepstream-6.3   # 6.3 Jetson, 6.2 20.04
-sudo ./install.sh
-sudo ldconfig
-
-#Boost Jetson Performance
-#To optimize performance, especially for video analytics tasks, boost the Jetson clocks:
-sudo nvpmodel -m 0
-sudo jetson_clocks
-#Note: For Jetson Orin NX, use sudo nvpmodel -m 8 instead
+# bytetrack
+git clone https://github.com/ifzhang/ByteTrack.git
+cd ByteTrack
+#pip3 install --upgrade pillow
+#pip3 install --force-reinstall imageio scikit-image
+pip3 install -r requirements.txt
+python3 setup.py develop
+pip3 install cython; pip3 install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
+pip3 install cython_bbox
 
 # opencv
 sudo apt install libopencv-dev #python3-opencv
-sudo pip3 install opencv-python
-sudo pip3 install opencv-python-headless  # Optional, for headless environments
+python3 -m pip install opencv-python
+#python3 -m pip install opencv-python-headless  # Optional, for headless environments
 
 cd ~/src
 git clone https://gitlab.com/missionsystems/hyperteaming/detr.git
@@ -188,7 +248,6 @@ cd ~/src/detr
 pip install cython scipy
 pip install -U 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
 pip install git+https://github.com/cocodataset/panopticapi.git
-
 
 # Eigen
 # sudo apt-get install libeigen3-dev   # 3.3.0
@@ -252,16 +311,14 @@ git clone https://gitlab.com/orthographic/comma.git
 git clone https://gitlab.com/orthographic/snark.git
 git clone https://gitlab.com/missionsystems/ms-common.git   #for ms-log-multitool (using ccmake, enable sensors and then logging)
 
-sudo apt install libboost1.67-dev
+#sudo apt install libboost1.67-dev
+sudo apt install libboost-all-dev
 sudo apt install qt3d5-dev qt5-default libqt5charts5-dev libqt5charts5-dev libexiv2-dev libassimp-dev libtbb-dev
-
+sudo apt install python3-numpy #unfortunately, comma will be installed using sudo make install, requires numpy also installed using sudo
 cd ~/src/comma
-mkdir build
-cd build
-cmake ..
+mkdir build && cd build && cmake ..
 make -j$(nproc)
 sudo make install
-
 
 #find_package(TBB REQUIRED)
 #target_link_libraries(cv-cat TBB::tbb)
@@ -273,7 +330,7 @@ cmake \
     -Dsnark_build_navigation=ON \
     -Dsnark_build_sensors_dc1394=OFF \
     -Dsnark_build_sensors_ouster=ON \
-    -Dsnark_build_ros=ON \
+    -Dsnark_build_ros=OFF \
     ..
 make -j$(nproc)
 sudo make install

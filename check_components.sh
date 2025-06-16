@@ -13,10 +13,10 @@ MISSING_TOOLS=()
 
 # Function to check the availability and print the version of a command
 check_and_print_version() {
-    command -v "$1" &> /dev/null
-    if [ $? -eq 0 ]; then
+    if command -v "$1" &> /dev/null; then
         echo -e "${CHECK_MARK} $2 is available."
-        eval "$3"
+        # Optional: Uncomment if you still want to run the command (but ignore output/errors)
+        # eval "$3" &> /dev/null
     else
         echo -e "${CROSS_MARK} Error: $2 is NOT available."
         MISSING_TOOLS+=("$2")
@@ -102,10 +102,10 @@ else
 fi
 
 # comma (csv-play)
-check_and_print_version "csv-play" "comma (csv-play)" "csv-play --help | head -n 1"
+check_and_print_version "csv-play" "comma (csv-play)" "true"
 
 # snark (cv-cat)
-check_and_print_version "cv-cat" "snark (cv-cat)" "cv-cat --help | head -n 1"
+check_and_print_version "cv-cat" "snark (cv-cat)" "true"
 
 # conda
 check_and_print_version "conda" "Anaconda3 (conda)" "conda --version"
