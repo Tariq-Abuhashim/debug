@@ -230,9 +230,13 @@ cd ByteTrack
 #pip3 install --upgrade pillow
 #pip3 install --force-reinstall imageio scikit-image
 pip3 install -r requirements.txt
-python3 setup.py develop
+python3 setup.py develop --user
 pip3 install cython; pip3 install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
 pip3 install cython_bbox
+# test
+# download bytetrack_x_mot17.pth.tar in ByteTrack/pretrained
+cd ByteTrack
+python3 tools/demo_track.py video -f exps/example/mot/yolox_x_mix_det.py -c pretrained/bytetrack_x_mot17.pth.tar --fp16 --fuse --save_result
 
 # opencv
 sudo apt install libopencv-dev #python3-opencv
