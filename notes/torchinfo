@@ -1,0 +1,109 @@
+#capture
+!pip install super-gradients==3.1.3
+!pip install imutils
+!pip install roboflow
+!pip install pytube --upgrade
+
+from super_gradients.training import models
+yolo_nas_l = models.get("yolo_nas_l", pretrained_weights="coco")
+
+!pip install torchinfo
+from torchinfo import summary
+summary(model=yolo_nas_l,
+        input_size=(16, 3, 640, 640),
+        col_names=["input_size", "output_size", "num_params", "trainable"],
+        col_width=20,
+        row_settings=["var_names"]
+)
+
+
+
+Output will look like this
+
+
+
+Requirement already satisfied: torchinfo in /usr/local/lib/python3.10/dist-packages (1.8.0)
+
+=================================================================================================================================================
+Layer (type (var_name))                                           Input Shape          Output Shape         Param #              Trainable
+=================================================================================================================================================
+YoloNAS_L (YoloNAS_L)                                             [16, 3, 640, 640]    [16, 8400, 4]        --                   True
+├─NStageBackbone (backbone)                                       [16, 3, 640, 640]    [16, 96, 160, 160]   --                   True
+│    └─YoloNASStem (stem)                                         [16, 3, 640, 640]    [16, 48, 320, 320]   --                   True
+│    │    └─QARepVGGBlock (conv)                                  [16, 3, 640, 640]    [16, 48, 320, 320]   3,024                True
+│    └─YoloNASStage (stage1)                                      [16, 48, 320, 320]   [16, 96, 160, 160]   --                   True
+│    │    └─QARepVGGBlock (downsample)                            [16, 48, 320, 320]   [16, 96, 160, 160]   88,128               True
+│    │    └─YoloNASCSPLayer (blocks)                              [16, 96, 160, 160]   [16, 96, 160, 160]   758,594              True
+│    └─YoloNASStage (stage2)                                      [16, 96, 160, 160]   [16, 192, 80, 80]    --                   True
+│    │    └─QARepVGGBlock (downsample)                            [16, 96, 160, 160]   [16, 192, 80, 80]    351,360              True
+│    │    └─YoloNASCSPLayer (blocks)                              [16, 192, 80, 80]    [16, 192, 80, 80]    2,045,315            True
+│    └─YoloNASStage (stage3)                                      [16, 192, 80, 80]    [16, 384, 40, 40]    --                   True
+│    │    └─QARepVGGBlock (downsample)                            [16, 192, 80, 80]    [16, 384, 40, 40]    1,403,136            True
+│    │    └─YoloNASCSPLayer (blocks)                              [16, 384, 40, 40]    [16, 384, 40, 40]    13,353,733           True
+│    └─YoloNASStage (stage4)                                      [16, 384, 40, 40]    [16, 768, 20, 20]    --                   True
+│    │    └─QARepVGGBlock (downsample)                            [16, 384, 40, 40]    [16, 768, 20, 20]    5,607,936            True
+│    │    └─YoloNASCSPLayer (blocks)                              [16, 768, 20, 20]    [16, 768, 20, 20]    22,298,114           True
+│    └─SPP (context_module)                                       [16, 768, 20, 20]    [16, 768, 20, 20]    --                   True
+│    │    └─Conv (cv1)                                            [16, 768, 20, 20]    [16, 384, 20, 20]    295,680              True
+│    │    └─ModuleList (m)                                        --                   --                   --                   --
+│    │    └─Conv (cv2)                                            [16, 1536, 20, 20]   [16, 768, 20, 20]    1,181,184            True
+├─YoloNASPANNeckWithC2 (neck)                                     [16, 96, 160, 160]   [16, 96, 80, 80]     --                   True
+│    └─YoloNASUpStage (neck1)                                     [16, 768, 20, 20]    [16, 192, 20, 20]    --                   True
+│    │    └─Conv (reduce_skip1)                                   [16, 384, 40, 40]    [16, 192, 40, 40]    74,112               True
+│    │    └─Conv (reduce_skip2)                                   [16, 192, 80, 80]    [16, 192, 80, 80]    37,248               True
+│    │    └─Conv (downsample)                                     [16, 192, 80, 80]    [16, 192, 40, 40]    332,160              True
+│    │    └─Conv (conv)                                           [16, 768, 20, 20]    [16, 192, 20, 20]    147,840              True
+│    │    └─ConvTranspose2d (upsample)                            [16, 192, 20, 20]    [16, 192, 40, 40]    147,648              True
+│    │    └─Conv (reduce_after_concat)                            [16, 576, 40, 40]    [16, 192, 40, 40]    110,976              True
+│    │    └─YoloNASCSPLayer (blocks)                              [16, 192, 40, 40]    [16, 192, 40, 40]    2,595,716            True
+│    └─YoloNASUpStage (neck2)                                     [16, 192, 40, 40]    [16, 96, 40, 40]     --                   True
+│    │    └─Conv (reduce_skip1)                                   [16, 192, 80, 80]    [16, 96, 80, 80]     18,624               True
+│    │    └─Conv (reduce_skip2)                                   [16, 96, 160, 160]   [16, 96, 160, 160]   9,408                True
+│    │    └─Conv (downsample)                                     [16, 96, 160, 160]   [16, 96, 80, 80]     83,136               True
+│    │    └─Conv (conv)                                           [16, 192, 40, 40]    [16, 96, 40, 40]     18,624               True
+│    │    └─ConvTranspose2d (upsample)                            [16, 96, 40, 40]     [16, 96, 80, 80]     36,960               True
+│    │    └─Conv (reduce_after_concat)                            [16, 288, 80, 80]    [16, 96, 80, 80]     27,840               True
+│    │    └─YoloNASCSPLayer (blocks)                              [16, 96, 80, 80]     [16, 96, 80, 80]     2,546,372            True
+│    └─YoloNASDownStage (neck3)                                   [16, 96, 80, 80]     [16, 192, 40, 40]    --                   True
+│    │    └─Conv (conv)                                           [16, 96, 80, 80]     [16, 96, 40, 40]     83,136               True
+│    │    └─YoloNASCSPLayer (blocks)                              [16, 192, 40, 40]    [16, 192, 40, 40]    1,280,900            True
+│    └─YoloNASDownStage (neck4)                                   [16, 192, 40, 40]    [16, 384, 20, 20]    --                   True
+│    │    └─Conv (conv)                                           [16, 192, 40, 40]    [16, 192, 20, 20]    332,160              True
+│    │    └─YoloNASCSPLayer (blocks)                              [16, 384, 20, 20]    [16, 384, 20, 20]    5,117,700            True
+├─NDFLHeads (heads)                                               [16, 96, 80, 80]     [16, 8400, 4]        --                   True
+│    └─YoloNASDFLHead (head1)                                     [16, 96, 80, 80]     [16, 68, 80, 80]     --                   True
+│    │    └─ConvBNReLU (stem)                                     [16, 96, 80, 80]     [16, 128, 80, 80]    12,544               True
+│    │    └─Sequential (cls_convs)                                [16, 128, 80, 80]    [16, 128, 80, 80]    147,712              True
+│    │    └─Identity (cls_dropout_rate)                           [16, 128, 80, 80]    [16, 128, 80, 80]    --                   --
+│    │    └─Conv2d (cls_pred)                                     [16, 128, 80, 80]    [16, 80, 80, 80]     10,320               True
+│    │    └─Sequential (reg_convs)                                [16, 128, 80, 80]    [16, 128, 80, 80]    147,712              True
+│    │    └─Identity (reg_dropout_rate)                           [16, 128, 80, 80]    [16, 128, 80, 80]    --                   --
+│    │    └─Conv2d (reg_pred)                                     [16, 128, 80, 80]    [16, 68, 80, 80]     8,772                True
+│    └─YoloNASDFLHead (head2)                                     [16, 192, 40, 40]    [16, 68, 40, 40]     --                   True
+│    │    └─ConvBNReLU (stem)                                     [16, 192, 40, 40]    [16, 256, 40, 40]    49,664               True
+│    │    └─Sequential (cls_convs)                                [16, 256, 40, 40]    [16, 256, 40, 40]    590,336              True
+│    │    └─Identity (cls_dropout_rate)                           [16, 256, 40, 40]    [16, 256, 40, 40]    --                   --
+│    │    └─Conv2d (cls_pred)                                     [16, 256, 40, 40]    [16, 80, 40, 40]     20,560               True
+│    │    └─Sequential (reg_convs)                                [16, 256, 40, 40]    [16, 256, 40, 40]    590,336              True
+│    │    └─Identity (reg_dropout_rate)                           [16, 256, 40, 40]    [16, 256, 40, 40]    --                   --
+│    │    └─Conv2d (reg_pred)                                     [16, 256, 40, 40]    [16, 68, 40, 40]     17,476               True
+│    └─YoloNASDFLHead (head3)                                     [16, 384, 20, 20]    [16, 68, 20, 20]     --                   True
+│    │    └─ConvBNReLU (stem)                                     [16, 384, 20, 20]    [16, 512, 20, 20]    197,632              True
+│    │    └─Sequential (cls_convs)                                [16, 512, 20, 20]    [16, 512, 20, 20]    2,360,320            True
+│    │    └─Identity (cls_dropout_rate)                           [16, 512, 20, 20]    [16, 512, 20, 20]    --                   --
+│    │    └─Conv2d (cls_pred)                                     [16, 512, 20, 20]    [16, 80, 20, 20]     41,040               True
+│    │    └─Sequential (reg_convs)                                [16, 512, 20, 20]    [16, 512, 20, 20]    2,360,320            True
+│    │    └─Identity (reg_dropout_rate)                           [16, 512, 20, 20]    [16, 512, 20, 20]    --                   --
+│    │    └─Conv2d (reg_pred)                                     [16, 512, 20, 20]    [16, 68, 20, 20]     34,884               True
+=================================================================================================================================================
+Total params: 66,976,392
+Trainable params: 66,976,392
+Non-trainable params: 0
+Total mult-adds (T): 1.04
+=================================================================================================================================================
+Input size (MB): 78.64
+Forward/backward pass size (MB): 27238.60
+Params size (MB): 178.12
+Estimated Total Size (MB): 27495.37
+=================================================================================================================================================
+

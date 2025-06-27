@@ -1,0 +1,55 @@
+mrt@gannet:~/src/Swarm-SLAM/src$ source /opt/ros/foxy/setup.bash
+ROS_DISTRO was set to 'noetic' before. Please make sure that the environment does not mix paths from different distributions.
+
+mrt@gannet:~/src/Swarm-SLAM/src$ sudo rosdep init
+ERROR: default sources list file already exists:
+	/etc/ros/rosdep/sources.list.d/20-default.list
+Please delete if you wish to re-initialize
+
+mrt@gannet:~/src/Swarm-SLAM/src$ sudo rm -r /etc/ros/rosdep/sources.list.d/20-default.list
+
+mrt@gannet:~/src/Swarm-SLAM/src$ sudo rosdep init
+Wrote /etc/ros/rosdep/sources.list.d/20-default.list
+Recommended: please run
+
+	rosdep update
+
+mrt@gannet:~/src/Swarm-SLAM/src$ source /opt/ros/foxy/setup.bash
+
+mrt@gannet:~/src/Swarm-SLAM/src$ rosdep update
+reading in sources list data from /etc/ros/rosdep/sources.list.d
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/osx-homebrew.yaml
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/base.yaml
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/python.yaml
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/ruby.yaml
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/releases/fuerte.yaml
+Query rosdistro index https://raw.githubusercontent.com/ros/rosdistro/master/index-v4.yaml
+Skip end-of-life distro "ardent"
+Skip end-of-life distro "bouncy"
+Skip end-of-life distro "crystal"
+Skip end-of-life distro "dashing"
+Skip end-of-life distro "eloquent"
+Skip end-of-life distro "foxy"
+Skip end-of-life distro "galactic"
+Skip end-of-life distro "groovy"
+Add distro "humble"
+Skip end-of-life distro "hydro"
+Skip end-of-life distro "indigo"
+Skip end-of-life distro "iron"
+Skip end-of-life distro "jade"
+Add distro "jazzy"
+Skip end-of-life distro "kinetic"
+Skip end-of-life distro "lunar"
+Skip end-of-life distro "melodic"
+Add distro "noetic"
+Add distro "rolling"
+updated cache in /home/mrt/.ros/rosdep/sources.cache
+
+mrt@gannet:~/src/Swarm-SLAM$ rosversion -d
+foxy
+
+mrt@gannet:~/src/Swarm-SLAM$ rosdep install --from-paths src -y --ignore-src --rosdistro foxy
+
+
+
+

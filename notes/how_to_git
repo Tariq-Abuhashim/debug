@@ -1,0 +1,78 @@
+
+####### Setup SSH Keys
+
+#Generate a GitHub SSH Key
+ssh-keygen -t ed25519 -C "your_email@example.com" -f ~/.ssh/id_ed25519_github
+
+#Generate a GitLab SSH Key
+ssh-keygen -t ed25519 -C "your_email@example.com" -f ~/.ssh/id_ed25519_gitlab
+
+#Add the SSH Keys to GitHub and GitLab (go to corresponding profiles and add new SSH Keys)
+cat ~/.ssh/id_ed25519_github.pub
+cat ~/.ssh/id_ed25519_gitlab.pub
+
+#Configure SSH to Use the Correct Key for Each Service
+nano ~/.ssh/config
+
+#Add the following configurations:
+
+# GitHub
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github
+
+# GitLab
+Host gitlab.com
+  HostName gitlab.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_gitlab
+  
+#Save and exit
+
+#Update Remote URLs to Use SSH
+$ git clone https://gitlab.com/missionsystems/hyperteaming/covins-dsdf.git object-slam
+$ cd object-slam
+$ git remote set-url --push github git@github.com:Tariq-Abuhashim/object-slam.git
+$ git remote -v
+origin	git@gitlab.com:t.abuhashim/object-slam.git (fetch)
+origin	git@github.com:Tariq-Abuhashim/object-slam.git (push)
+origin	git@gitlab.com:t.abuhashim/object-slam.git (push)
+
+
+
+#Test the SSH Connections
+ssh -T git@github.com
+ssh -T git@gitlab.com
+
+####### Add GitHub as a Second Remote
+
+cd /path/to/your/repository
+git remote -v
+
+#You should see something like
+origin  git@gitlab.com:your-username/your-repo.git (fetch)
+origin  git@gitlab.com:your-username/your-repo.git (push)
+
+#Add GitHub as second remove
+git remote add github git@github.com:Tariq-Abuhashim/object-slam.git
+git remote -v
+
+#You should now see both origin (GitLab) and github (GitHub):
+origin  git@gitlab.com:your-username/your-repo.git (fetch)
+origin  git@gitlab.com:your-username/your-repo.git (push)
+github  git@github.com:your-username/your-repo.git (fetch)
+github  git@github.com:your-username/your-repo.git (push)
+
+#Push changes (gitlab and github)
+git push origin
+git push github
+
+#Optional, setup a mirror
+# If you want to fully mirror the repository (including all branches and tags), you can use the --mirror option.
+git clone --mirror git@gitlab.com:your-username/your-repo.git
+cd your-repo
+git remote set-url --push origin git@github.com:your-username/your-repo.git
+git push --mirror
+
+

@@ -1,0 +1,13 @@
+#Steps to Apply Changes
+
+#Open the file for editing:
+sudo nano /etc/systemd/logind.conf
+
+#Modify the lines as follows:
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+#Save (Ctrl+O → Enter → Ctrl+X).
+
+#Restart the service:
+sudo systemctl restart systemd-logind

@@ -1,0 +1,26 @@
+########## 2360 folders
+#for ((i=1; i<=2360; i++)) do
+#	echo searching $i
+#	export file=/media/tariq/SEAGATE/recovery/sda5/recup_dir.$i
+#	echo "grep -rnw $file -e \"optimise_pwg\"" | bash
+#done
+
+########## 637 folders
+for ((i=1; i<=637; i++)) do
+	echo searching $i
+	export file=/home/tariq/workspace/recup_dir.$i
+	echo "grep -rnw $file -e \"batch_demo\"" | bash
+done
+
+########## to delete some formats
+#export thispath=$(pwd)
+#for ((i=1; i<=637; i++)) do
+#	echo processing $i
+#	cd /home/tariq/workspace/recup_dir.$i
+#	sudo rm -r *.elf
+#	sudo rm -r *.mat
+#	sudo rm -r *.html
+#	sudo rm -r *.sqlite
+#	sudo rm -r *.gz
+#done
+#cd $thispath

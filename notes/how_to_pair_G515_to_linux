@@ -1,0 +1,37 @@
+Step-by-Step Solution
+
+Full System Reset
+-----------------
+
+First, let's completely clear all Bluetooth state:
+
+sudo systemctl stop bluetooth
+sudo rm -rf /var/lib/bluetooth/*
+sudo systemctl start bluetooth
+
+Keyboard Hardware Reset
+-----------------------
+
+Turn off the keyboard
+Press and hold the Bluetooth pairing button for 15 seconds (this performs a full reset)
+Release and wait for the LED to blink rapidly
+
+Special Pairing Mode
+--------------------
+
+Run these commands in order:
+
+bluetoothctl
+power on
+agent off
+agent NoInputNoOutput
+default-agent
+scan on
+
+When you see your keyboard appear 
+[NEW] Device DC:13:14:4D:AA:33 G515 LS TKL
+
+run: (update command with correct address)
+pair DC:13:14:4D:AA:33
+
+Wait for 30 seconds - sometimes the pairing takes longer to complete

@@ -1,0 +1,53 @@
+
+
+#List All Disks and Partitions
+sudo fdisk -l
+
+example output:
+Disk /dev/nvme0n1: 953.89 GiB, 1024209543168 bytes, 2000409264 sectors
+Disk model: KXG60ZNV1T02 KIOXIA                     
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: 39A0C609-712D-41E4-A733-AF05D8D09001
+
+Device              Start        End    Sectors   Size Type
+/dev/nvme0n1p1       2048    1050623    1048576   512M EFI System
+/dev/nvme0n1p2    1050624    1083391      32768    16M Microsoft reserved
+/dev/nvme0n1p3    1083392  525371391  524288000   250G Microsoft basic data
+/dev/nvme0n1p4 1999087616 2000406527    1318912   644M Windows recovery environment
+/dev/nvme0n1p5  525371392  725370879  199999488  95.4G Linux filesystem
+/dev/nvme0n1p6  725370880  789370879   64000000  30.5G Linux swap
+/dev/nvme0n1p7  789370880 1999087615 1209716736 576.9G Linux filesystem
+
+Partition table entries are not in disk order.
+
+
+#mount partitions
+sudo mount /dev/nvme0n1p1 /mnt/boot/efi  # Mount ESP (if separate)
+sudo mount /dev/nvme0n1p5 /mnt           # Mount root partition (this was set to / during install)
+sudo mount --bind /dev /mnt/dev
+sudo mount --bind /proc /mnt/proc
+sudo mount --bind /sys /mnt/sys
+sudo mount --bind /run /mnt/run
+
+#fix with update/upgrade
+sudo apt update
+sudo apt upgrade
+sudo reboot
+
+#Fixing/installing grub
+grub-install /dev/nvme0n1
+sudo update-grub
+sudo reboot
+
+#boot-repair
+sudo add-apt-repository ppa:yannubuntu/boot-repair
+sudo apt update
+sudo apt upgrade
+sudo apt install boot-repair
+boot-repair
+sudo reboot
+
+

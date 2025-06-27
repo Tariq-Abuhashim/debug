@@ -1,0 +1,74 @@
+camera-imu-calibration WIKI :
+https://github.com/ethz-asl/kalibr/wiki/camera-imu-calibration
+
+Installation :
+https://github.com/ethz-asl/kalibr/wiki/installation
+
+Visual-Inertial (VI-) Sensor developed by the Autonomous Systems Lab (ASL), ETH Zurich and Skybotix :
+http://wiki.ros.org/vi_sensor
+
+
+My steps:
+---------
+
+(1) I installed ROS kinetic.
+
+(2) I installed dependencies:
+
+	sudo apt-get install python-setuptools python-rosinstall ipython doxygen ros-kinetic-vision-opencv ros-kinetic-image-transport-plugins ros-kinetic-cmake-modules python-software-properties software-properties-common libpoco-dev python-matplotlib python-scipy python-git python-pip ipython libtbb-dev libblas-dev liblapack-dev python-catkin-tools libv4l-dev
+
+	The following dependencies (Eigen, OpenCV, and Boost) could have been installed from source instead (in /home/tariq/Dev folder),
+
+	sudo libeigen3-dev libboost-all-dev libopencv-dev
+
+	Then,
+	sudo pip install python-igraph --upgrade
+---------
+(3) Create a catkin workspace:
+
+	cd /home/tariq/Dev
+	mkdir kalibr_workspace
+	cd /kalibr_workspace
+	mkdir src
+	source /opt/ros/kinetic/setup.bash
+	catkin init 
+	catkin config --extend /opt/ros/kinetic 
+	catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+(4) Clone the source repo into your catkin workspace src folder:
+
+	cd /src 
+	git clone https://github.com/ethz-asl/Kalibr.git
+	
+	Go to : /home/tariq/Dev/kalibr_workspace/src/Kalibr/aslam_offline_calibration/ethz_apriltag2/CMakeLists.txt
+	In line 11, change eigen to Eigen, and opencv to OpenCV.
+
+(5) Build the code using the Release configuration. depending on the available memory, you might need to reduce the build threads (e.g. add -j2 to catkin_make) 
+
+	cd /home/tariq/Dev/kalibr_workspace 
+	catkin build -DCMAKE_BUILD_TYPE=Release -j4 -DBOOST_ROOT=/home/tariq/Dev/boost_1_64_0/build -DOpenCV_INCLUDE_DIRS=/home/tariq/Dev/opencv_build/include/ -DEigen_INCLUDE_DIRS=/usr/local/include/eigen3 -DEigen_DIR=/home/tariq/Dev/eigen
+
+(6) Source the catkin workspace setup to use Kalibr:
+
+	source /home/tariq/Dev/kalibr_workspace/devel/setup.bash
+	
+	
+Issued I faced on Ubuntu 16.04 and when using ROS kinetic:
+---------
+
+(1) If facing any troubles or errors, try to clean the catkin workspace using : 
+	catkin clean
+	Then run the building line again.
+	
+(2) Build runs on multiple threads, so once a thread failes, building stops after the remaining threads are done. So, if you re-run build again, building will continue, until fails again.
+	I could continue doing that until only related folders were left.
+	
+(3) I had an eigen error: static assertion failed
+	
+	/home/tariq/Dev/kalibr_workspace/src/Kalibr/aslam_nonparametric_estimation/bsplines_python/src/BSplinePython.cpp:31:27:   required from ‘double BiFunction<T>::getBi(int) [with T = Eigen::CwiseNullaryOp<bsplines::BiVector, Eigen::Matrix<double, -1, 1> >]’
+	/home/tariq/Dev/kalibr_workspace/src/Kalibr/aslam_nonparametric_estimation/bsplines_python/src/BSplinePython.cpp:45:66:   required from here
+	error: static assertion failed: THIS_COEFFICIENT_ACCESSOR_TAKING_ONE_ACCESS_IS_ONLY_FOR_EXPRESSIONS_ALLOWING_LINEAR_ACCESS
+     #define EIGEN_STATIC_ASSERT(X,MSG) static_assert(X,#MSG);
+	
+	Check this file at /home/tariq/Dev/kalibr_workspace/src/Kalibr/aslam_nonparametric_estimation/bsplines_python/src/BSplinePython.cpp at line 31. 
+	I have commented out that line to finish building successfully.

@@ -1,0 +1,10 @@
+$ sudo purge nvidia*
+
+you can temporarily use Nouveau:
+$ sudo apt install xserver-xorg-video-nouveau
+
+or, reinstall the drivers (better solution):
+$ sudo ubuntu-drivers autoinstall
+
+then, reboot
+$ reboot
