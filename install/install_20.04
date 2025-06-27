@@ -1,7 +1,5 @@
-#!/bin/bash
 
-# Stop execution if any command fails
-set -e
+# Instructions to setup Ubuntu 20.05
 
 sudo apt install build-essential libssl-dev dkms
 sudo apt install gcc
